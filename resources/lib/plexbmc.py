@@ -2835,6 +2835,9 @@ def amberskin():
 
         for section in server.get_sections():
 
+            if not SectionFilter.is_allowed(section.title, server.server_name):
+                continue
+
             printDebug.debug("=Enter amberskin section=")
             printDebug.debug(str(section.__dict__))
             printDebug.debug("=/section=")
