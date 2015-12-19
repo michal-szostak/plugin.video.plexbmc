@@ -1,5 +1,27 @@
 PleXBMC - Use KODI (aka XBMC) to play media from Plex Media Server
 
+NOTES
+-----
+
+This is a fork of original PleXBMC, it was forked in order to add a few features which I required from my HTPC, namely:
+
+* Ability to filter Sections depending on their name and server on which they are
+
+FILTERING
+---------
+
+In the PleXBMC plugin configuration window -> Advenced is a field titled 'Sections to display', there sections which
+will be visible for the current profile can be provided. Some examples below (entries should be space separated, if
+entry itself contains space it can be wrapped in quotes ""):
+
+* ```"TV Shows"``` it will make section titled "TV Shows" visible for the current profile, all other sections will be hidden
+* ```Movies "TV Shows"``` Movies an "TV Shows" sections will be visible for the current profile
+* ```Server1:Movies Server2:*``` Section Movies from Plex Server named Server1 will be visible, as well as all sections from Server2
+* ```*``` All sections from all servers will be visible
+* ```*:Movies``` is equivalent to ```Movies``` and will show section titled "Movies" from all servers
+
+
+
 This is a KODI (previously known as XBMC) addon that allows media and metadata stored in the Plex Media 
 Server (PMS) to be viewed and played using the KODI interface.
 

@@ -104,4 +104,5 @@
     <string id="30101">Transcoder</string>
     <string id="30102">Clientname</string>
     <string id="30103">"Alle Episoden" aus Liste der Staffeln ausblenden</string>
+	<string id="30200">Sections to display</string>
 </strings>

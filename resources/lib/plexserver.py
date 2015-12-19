@@ -225,7 +225,6 @@ class PlexMediaServer:
         self.master=value
 
     def talk(self,url='/',refresh=False, type='get'):
-
         if not self.offline or refresh:
             printDebug.info("URL is: %s" % url)
 

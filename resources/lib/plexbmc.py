@@ -24,7 +24,7 @@
     along with PleXBMC Plugin.  If not, see <http://www.gnu.org/licenses/>.
 
 '''
-
+import shlex
 import urllib
 import urlparse
 import re
@@ -231,7 +231,65 @@ def addGUIItem(url, details, extraData, context=None, folder=True):
 
     return xbmcplugin.addDirectoryItem(handle=pluginhandle,url=link_url,listitem=liz,isFolder=folder)
 
-def displaySections( filter=None, display_shared=False ):
+
+class SectionFilter(object):
+    filter_str = []
+    allow_all = True
+    allow_all_from_servers = []
+
+    @classmethod
+    def set_filter_str(cls, filter_str):
+        """
+
+        @param filter_str:
+        @type filter_str: str
+        """
+        cls.filter_str = []
+        cls.allow_all_from_servers = []
+
+        filters = shlex.split(filter_str)
+        if '*' in filters:
+            printDebug.info('allowing all sections')
+            cls.allow_all = True
+            return
+        else:
+            cls.allow_all = False
+
+        for filter in filters:
+            if filter.count(':') > 1:
+                printDebug.error('%s is not valid section identifier' % filter)
+                continue
+            if filter.count(':') == 1:
+                server, section = filter.split(':')
+                if section == '*':
+                    cls.allow_all_from_servers.append(server)
+                else:
+                    cls.filter_str.append((server, section))
+            else:
+                cls.filter_str.append(('*', filter))
+
+        printDebug.info('filter_str: %s' % cls.filter_str)
+        printDebug.info('allow_all_from_servers: %s' % cls.allow_all_from_servers)
+
+    @classmethod
+    def is_allowed(cls, section_title, server_name):
+        printDebug.info("%s:%s processing..." % (server_name, section_title))
+        if cls.allow_all:
+            printDebug.info("%s:%s allowd: policy ALLOW ALL" % (server_name, section_title))
+            return True
+        elif server_name in cls.allow_all_from_servers:
+            printDebug.info("%s:%s allowd: policy ALLOW FROM %s" % (server_name, section_title, server_name))
+            return True
+        for server, section in cls.filter_str:
+            if server == server_name or server == '*':
+                if section == section_title or section == '*':
+                    printDebug.info("%s:%s allowd: policy ALLOW SPECIFIC" % (server_name, section_title))
+                    return True
+        printDebug.info("%s:%s denied..." % (server_name, section_title))
+        return False
+
+
+def displaySections( filter=None, display_shared=False):
     printDebug.debug("== ENTER ==")
     xbmcplugin.setContent(pluginhandle, 'files')
 
@@ -245,6 +303,11 @@ def displaySections( filter=None, display_shared=False ):
         for section in server.get_sections():
 
             if display_shared and server.is_owned():
+                continue
+
+            printDebug.info("processing section: %s:%s" % (server.server_name, section.title))
+
+            if not SectionFilter.is_allowed(section.title, server.server_name):
                 continue
 
             details={'title' : section.get_title() }
@@ -1621,7 +1684,6 @@ def getContent( url ):
         return
 
     view_group=tree.get('viewGroup')
-
     if view_group == "movie":
         printDebug.debug( "This is movie XML, passing to Movies")
         Movies(url, tree)
@@ -3290,6 +3352,8 @@ def displayContent( acceptable_level, content_level ):
         @output: boolean
     '''
 
+    return False
+
     printDebug.info("Checking rating flag [%s] against [%s]" % (content_level, acceptable_level))
 
     if acceptable_level == "Adults":
@@ -3408,6 +3472,7 @@ def shelf( server_list=None ):
                 full_count += 1
 
     library_filter = settings.get_setting('libraryfilter')
+
     acceptable_level = settings.get_setting('contentFilter')
 
     #For each of the servers we have identified
@@ -4026,6 +4091,9 @@ def start_plexbmc():
     param_identifier=params.get('identifier')
     param_indirect=params.get('indirect')
     force=params.get('force')
+
+    section_filter = settings.get_setting('sectionfilter')
+    SectionFilter.set_filter_str(section_filter)
 
     if command is None:
         try:
